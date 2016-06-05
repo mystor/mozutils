@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Exit on any failures - we don't want to push a borked patch to try
+set -e
+
+if [[ ! -z $(git status -s) ]]; then
+    echo "There are unstaged changes in the index"
+    exit -1
+fi
+
+# What's a getopt? ^.^
+if [[ $# == 1 ]]; then
+    if [[ "$1" == "--clang" ]]; then
+        git commit --allow-empty -m "try: -b do -p linux64-st-an,macosx64-st-an -u none -t none";
+    elif [[ "$1" == "--default" ]]; then
+        git commit --allow-empty -m "try: -b do -p linux64,linux64-st-an,macosx64-st-an,android-api-9,emulator -u all -t none";
+    elif [[ "$1" == "--linux" ]]; then
+        git commit --allow-empty -m "try: -b do -p linux64,linux64-st-an -u all -t none";
+    elif [[ "$1" == "--all" ]]; then
+        git commit --allow-empty -m "try: -b do -p all -u all -t none";
+    elif [[ "$1" == "--all-build" ]]; then
+        git commit --allow-empty -m "try: -b do -p all -u none -t none";
+    fi
+elif [[ "$1" == "try:" ]]; then
+    git commit --allow-empty -m "$*"
+elif [[ $# == 0 ]]; then
+    git commit --allow-empty; # Allow the user to input their try commit text here
+else
+    echo "Unexpected arguments to moztry"
+    exit -1
+fi
+
+if git push try; then
+    echo "Pushed successfully. Cleaning up."
+else
+    echo "Push failed. Cleaning up anyways."
+fi
+
+# Cleanup!
+git reset HEAD~1
+echo "Cleanup Successful"
